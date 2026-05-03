@@ -39,7 +39,7 @@ export function TopicDecisionPanel({ onSelect, selectedTopicId, topics }: TopicD
             <button className={`topic-card ${active ? "active" : ""}`} key={topic.id} onClick={() => onSelect(topic)} type="button">
               <div className="topic-topline">
                 <span>{topic.platform}</span>
-                <strong>{decision.score}</strong>
+                <strong>{active ? "已选" : decision.score}</strong>
               </div>
               <h3>{topic.title}</h3>
               <p>{topic.summary}</p>

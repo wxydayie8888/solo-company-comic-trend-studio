@@ -1,11 +1,14 @@
 import { AlertTriangle, BarChart3, CheckCircle2, Gauge, ListChecks } from "lucide-react";
-import { Episode, GrowthSummary } from "@/lib/types";
+import { Episode, GrowthSummary, WorkflowStatus } from "@/lib/types";
+
+type WorkflowStep = "topic" | "theory" | "script" | "storyboard" | "video" | "publish";
 
 const workflowLabel = {
   topic: "选题",
   theory: "理论",
   script: "脚本",
   storyboard: "分镜",
+  video: "短片",
   publish: "发布"
 };
 
@@ -16,7 +19,22 @@ const statusLabel = {
   blocked: "阻断"
 };
 
-export function GrowthReviewPanel({ episode, growth }: { episode: Episode; growth: GrowthSummary }) {
+export function GrowthReviewPanel({
+  activeStep,
+  episode,
+  growth,
+  nextStepLabel,
+  workflow
+}: {
+  activeStep: WorkflowStep;
+  episode: Episode;
+  growth: GrowthSummary;
+  nextStepLabel: string;
+  workflow: Record<WorkflowStep, WorkflowStatus>;
+}) {
+  const completedSteps = Object.values(workflow).filter((status) => status === "approved").length;
+  const progress = Math.round((completedSteps / Object.keys(workflow).length) * 100);
+
   return (
     <aside className="side-rail">
       <section className="work-panel ops-panel sticky-panel">
@@ -31,9 +49,22 @@ export function GrowthReviewPanel({ episode, growth }: { episode: Episode; growt
           {episode.reviewStatus === "ready" ? <CheckCircle2 size={18} /> : <AlertTriangle size={18} />}
           {episode.reviewStatus === "ready" ? "可以进入人工预览" : episode.reviewStatus === "blocked" ? "暂不发布" : "需要人工复核"}
         </div>
+        <div className="next-step-card">
+          <span>今日下一步</span>
+          <strong>{nextStepLabel}</strong>
+        </div>
+        <div className="progress-card" aria-label={`生产进度 ${progress}%`}>
+          <div>
+            <span>生产进度</span>
+            <b>{progress}%</b>
+          </div>
+          <div className="progress-track">
+            <span style={{ width: `${progress}%` }} />
+          </div>
+        </div>
         <div className="workflow-list">
-          {Object.entries(episode.workflow).map(([key, value]) => (
-            <div key={key}>
+          {Object.entries(workflow).map(([key, value]) => (
+            <div className={key === activeStep ? "current" : ""} key={key}>
               <span>{workflowLabel[key as keyof typeof workflowLabel]}</span>
               <b>{statusLabel[value]}</b>
             </div>

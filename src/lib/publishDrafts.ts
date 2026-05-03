@@ -2,6 +2,13 @@ import { Episode, Platform, PlatformDraft, PlatformScore } from "./types";
 
 const platformOrder: Platform[] = ["小红书", "抖音", "视频号", "快手"];
 
+const publishUrls: Record<Platform, string> = {
+  小红书: "https://creator.xiaohongshu.com/publish/publish",
+  抖音: "https://creator.douyin.com/creator-micro/content/upload",
+  视频号: "https://channels.weixin.qq.com/platform/post/create",
+  快手: "https://cp.kuaishou.com/article/publish/video"
+};
+
 function platformTone(platform: Platform) {
   return {
     小红书: {
@@ -62,6 +69,7 @@ export function createPlatformDrafts(episode: Episode): PlatformDraft[] {
         "确认字幕避开底部操作区",
         "人工预览后再发布"
       ],
+      publishUrl: publishUrls[platform],
       score,
       status: episode.reviewStatus === "blocked" ? "draft" : "ready-for-human",
       constraints:

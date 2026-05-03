@@ -153,6 +153,7 @@ export interface PlatformDraft {
   hashtags: string[];
   pinnedComment: string;
   checklist: string[];
+  publishUrl: string;
   score: PlatformScore;
   status: "draft" | "ready-for-human";
   constraints: string;
