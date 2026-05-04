@@ -21,6 +21,8 @@ interface Props {
 
 interface HealthInfo {
   aiEnabled: boolean;
+  imageProvider?: string;
+  ttsProvider?: string;
   topicsFetchedAt?: string;
 }
 
@@ -64,10 +66,10 @@ export function LiveControls({
     setBusy("topics");
     try {
       const res = await fetch("/api/topics/refresh", { method: "POST" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { topics: HotTopic[]; fetchedAt: string };
+      const data = (await res.json()) as { topics?: HotTopic[]; fetchedAt?: string; error?: string };
+      if (!res.ok || !data.topics) throw new Error(data.error ?? `HTTP ${res.status}`);
       onTopicsRefreshed(data.topics);
-      flash(`已抓 ${data.topics.length} 条热点（${new Date(data.fetchedAt).toLocaleTimeString("zh-CN")}）`);
+      flash(`已抓 ${data.topics.length} 条热点（${data.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString("zh-CN") : "现在"}）`);
       setHealth((h) => ({ ...h, topicsFetchedAt: data.fetchedAt }));
     } catch (err) {
       flash(`抓取失败：${(err as Error).message}`);
@@ -117,8 +119,12 @@ export function LiveControls({
   return (
     <div className="live-controls">
       <div className="live-controls-status">
-        <span className={health.aiEnabled ? "dot dot-green" : "dot dot-amber"} />
-        {health.aiEnabled ? "AI 已启用（Claude）" : "仅模板模式（未设置 ANTHROPIC_API_KEY）"}
+        <span className={health.imageProvider === undefined ? "dot dot-amber" : health.aiEnabled ? "dot dot-green" : "dot dot-amber"} />
+        文本：{health.imageProvider === undefined ? "检测中..." : health.aiEnabled ? "Claude" : "模板"}
+        <span style={{ opacity: 0.5 }}> · </span>
+        图像：{health.imageProvider === "jimeng" ? "即梦" : health.imageProvider === "mock" ? "占位图（mock）" : "—"}
+        <span style={{ opacity: 0.5 }}> · </span>
+        配音：{health.ttsProvider === "bytedance" ? "豆包" : health.ttsProvider === "mock-silence" ? "静默（mock）" : "—"}
         {health.topicsFetchedAt ? <em> · 上次抓取 {new Date(health.topicsFetchedAt).toLocaleString("zh-CN")}</em> : null}
       </div>
       <div className="live-controls-buttons">

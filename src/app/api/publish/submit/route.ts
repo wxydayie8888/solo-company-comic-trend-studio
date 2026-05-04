@@ -23,7 +23,14 @@ export async function POST(req: Request) {
     theoryId: input.theoryId,
     episodeId: input.episodeId,
     title: input.title,
-    status: result.status === "submitted" ? "submitted-to-mcp" : result.status === "error" ? "mcp-error" : "draft-copied",
+    status:
+      result.status === "submitted"
+        ? "submitted-to-mcp"
+        : result.status === "error"
+          ? "mcp-error"
+          : result.status === "manual"
+            ? "manual"
+            : "draft-copied",
     externalId: result.externalId,
     note: `${provider.name}${result.message ? `: ${result.message}` : ""}`
   };

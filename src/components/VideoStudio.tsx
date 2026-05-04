@@ -84,7 +84,7 @@ export function VideoStudio({ episode, generatedVideoUrl, isActive, isUnlocked, 
       </div>
       <div className={`step-callout ${isUnlocked ? "ready" : "locked"}`}>
         {isUnlocked
-          ? "两条路：浏览器端「快速预览」生成 60 秒 WebM 字幕条；服务端「漫画合成」走即梦文生图 + TTS + ffmpeg，输出 MP4。"
+          ? "两条路：「快速预览」浏览器 30 秒出 WebM 字幕条审稿；「漫画合成」服务端 1-3 分钟跑 8 张图 + TTS + ffmpeg 出 MP4（看顶部「图像」状态判断走的是即梦还是占位）。"
           : "先确认分镜，再生成短片。"}
       </div>
       <div className="video-grid">
@@ -109,7 +109,7 @@ export function VideoStudio({ episode, generatedVideoUrl, isActive, isUnlocked, 
             type="button"
           >
             {isRendering ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
-            {isRendering ? "正在合成漫画 MP4" : "用即梦合成漫画 MP4（服务端）"}
+            {isRendering ? "正在合成漫画 MP4（请勿关闭页面，预计 1-3 分钟）" : "漫画合成 MP4（服务端 · 即梦+TTS+ffmpeg）"}
           </button>
           {generatedVideoUrl ? (
             <a className="secondary-action" download={`${episode.id}.mp4`} href={generatedVideoUrl}>

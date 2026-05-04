@@ -4,44 +4,94 @@ import { Clipboard, ExternalLink, Megaphone, Play, Rocket, ShieldCheck } from "l
 import { useState } from "react";
 import { Platform, PlatformDraft } from "@/lib/types";
 
-export function PublishPackPanel({ drafts, generatedVideoUrl, isUnlocked }: { drafts: PlatformDraft[]; generatedVideoUrl: string | null; isUnlocked: boolean }) {
+interface Props {
+  drafts: PlatformDraft[];
+  generatedVideoUrl: string | null;
+  isUnlocked: boolean;
+  topicId: string;
+  theoryId: string;
+  episodeId: string;
+  episodeTitle: string;
+}
+
+export function PublishPackPanel({
+  drafts,
+  generatedVideoUrl,
+  isUnlocked,
+  topicId,
+  theoryId,
+  episodeId,
+  episodeTitle
+}: Props) {
   const [preparedPlatforms, setPreparedPlatforms] = useState<Partial<Record<Platform, string>>>({});
+  const [busy, setBusy] = useState<Platform | "all" | null>(null);
+
+  async function logPublish(draft: PlatformDraft) {
+    try {
+      const res = await fetch("/api/publish/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: draft.platform,
+          title: draft.titleA || episodeTitle,
+          body: draft.body,
+          hashtags: draft.hashtags,
+          videoUrl: generatedVideoUrl ?? "",
+          topicId,
+          theoryId,
+          episodeId
+        })
+      });
+      if (!res.ok) return null;
+      return (await res.json()) as { provider: string; status: string; message?: string };
+    } catch {
+      return null;
+    }
+  }
 
   async function prepareAllPlatforms() {
     if (!isUnlocked) return;
+    setBusy("all");
     const pack = drafts.map(formatDraftForClipboard).join("\n\n---\n\n");
     try {
-      await navigator.clipboard.writeText(`四平台分发包\n\n${pack}\n\n视频文件：请点击本页“下载视频文件”后上传。`);
-      setPreparedPlatforms(
-        drafts.reduce<Partial<Record<Platform, string>>>((result, draft) => {
-          result[draft.platform] = "四平台分发包已复制，发布入口已打开";
-          return result;
-        }, {})
-      );
+      await navigator.clipboard.writeText(`四平台分发包\n\n${pack}\n\n视频文件：请点击本页"下载视频文件"后上传。`);
     } catch {
-      setPreparedPlatforms(
-        drafts.reduce<Partial<Record<Platform, string>>>((result, draft) => {
-          result[draft.platform] = "发布入口已打开；浏览器禁止复制时请手动复制文案";
-          return result;
-        }, {})
-      );
+      // copy failed; fallthrough to log + open
     }
+    const results = await Promise.all(drafts.map((d) => logPublish(d)));
+    setPreparedPlatforms(
+      drafts.reduce<Partial<Record<Platform, string>>>((result, draft, idx) => {
+        const r = results[idx];
+        result[draft.platform] = r
+          ? `已通过 ${r.provider} ${r.status === "manual" ? "（手动模式）" : ""}写入日志，发布入口已打开`
+          : "发布入口已打开（写入日志失败）";
+        return result;
+      }, {})
+    );
     drafts.forEach((draft, index) => {
       window.setTimeout(() => window.open(draft.publishUrl, "_blank", "noopener,noreferrer"), index * 180);
     });
+    setBusy(null);
   }
 
   async function preparePublish(draft: PlatformDraft) {
     if (!isUnlocked) return;
+    setBusy(draft.platform);
     const copy = formatDraftForClipboard(draft);
-
     try {
       await navigator.clipboard.writeText(copy);
-      setPreparedPlatforms((current) => ({ ...current, [draft.platform]: "文案已复制，发布入口已打开" }));
     } catch {
-      setPreparedPlatforms((current) => ({ ...current, [draft.platform]: "浏览器禁止复制，请手动复制文案" }));
+      // ignore
     }
+    const r = await logPublish(draft);
+    setPreparedPlatforms((current) => ({
+      ...current,
+      [draft.platform]: r
+        ? `${r.provider} · ${r.status === "manual" ? "手动模式" : r.status} · 发布入口已打开`
+        : "发布入口已打开（日志写入失败）"
+    }));
     window.open(draft.publishUrl, "_blank", "noopener,noreferrer");
+    setBusy(null);
   }
 
   return (
@@ -63,9 +113,9 @@ export function PublishPackPanel({ drafts, generatedVideoUrl, isUnlocked }: { dr
           <b>四平台分发总控</b>
           <p>{generatedVideoUrl ? "先下载视频文件，再点击总按钮复制文案并打开发布入口。" : "生成短片后，这里会解锁分发动作。"}</p>
         </div>
-        <button className="primary-action" disabled={!isUnlocked} onClick={prepareAllPlatforms} type="button">
+        <button className="primary-action" disabled={!isUnlocked || busy !== null} onClick={prepareAllPlatforms} type="button">
           <Rocket size={17} />
-          一键准备四平台分发
+          {busy === "all" ? "正在准备 4 平台..." : "一键准备四平台分发"}
         </button>
       </div>
       <div className="draft-list">
@@ -101,9 +151,9 @@ export function PublishPackPanel({ drafts, generatedVideoUrl, isUnlocked }: { dr
               <ShieldCheck size={15} />
               {draft.checklist[0]}
             </div>
-            <button className="publish-action" disabled={!isUnlocked} onClick={() => preparePublish(draft)} type="button">
+            <button className="publish-action" disabled={!isUnlocked || busy !== null} onClick={() => preparePublish(draft)} type="button">
               <Clipboard size={16} />
-              一键准备{draft.platform}发布
+              {busy === draft.platform ? `正在准备${draft.platform}...` : `一键准备${draft.platform}发布`}
               <ExternalLink size={16} />
             </button>
             {preparedPlatforms[draft.platform] ? <p className="publish-status">{preparedPlatforms[draft.platform]}</p> : null}

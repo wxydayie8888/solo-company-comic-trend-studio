@@ -10,7 +10,7 @@ export interface PublishLog {
   theoryId: string;
   episodeId: string;
   title: string;
-  status: "draft-copied" | "submitted-to-mcp" | "mcp-error";
+  status: "draft-copied" | "submitted-to-mcp" | "mcp-error" | "manual";
   externalId?: string;
   note?: string;
 }

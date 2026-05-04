@@ -91,7 +91,21 @@ export default function Home() {
     [episode, scriptSegments, selectedTheory, selectedTopic]
   );
   const drafts = useMemo(() => createPlatformDrafts(editedEpisode), [editedEpisode]);
-  const growth = useMemo(() => summarizeGrowth(growthMetrics), []);
+  const [liveMetrics, setLiveMetrics] = useState(growthMetrics);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/growth")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.metrics?.length) return;
+        setLiveMetrics(data.metrics);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const growth = useMemo(() => summarizeGrowth(liveMetrics), [liveMetrics]);
   const workflow = useMemo<Record<ActiveStep, WorkflowStatus>>(
     () => ({
       topic: "approved",
@@ -332,7 +346,15 @@ export default function Home() {
             />
           </div>
           <div ref={publishRef}>
-            <PublishPackPanel drafts={drafts} generatedVideoUrl={generatedVideoUrl} isUnlocked={Boolean(generatedVideoUrl)} />
+            <PublishPackPanel
+              drafts={drafts}
+              episodeId={editedEpisode.id}
+              episodeTitle={editedEpisode.thesis.goldenLine}
+              generatedVideoUrl={generatedVideoUrl}
+              isUnlocked={Boolean(generatedVideoUrl)}
+              theoryId={selectedTheory.id}
+              topicId={selectedTopic.id}
+            />
           </div>
         </div>
         <GrowthReviewPanel activeStep={activeStep} episode={editedEpisode} growth={growth} nextStepLabel={nextStepLabel} workflow={workflow} />

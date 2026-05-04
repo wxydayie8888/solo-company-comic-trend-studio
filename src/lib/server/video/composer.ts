@@ -117,7 +117,11 @@ async function renderFramePart(frame: FrameInput, outPath: string, opts: FramePa
     })
     .join(",");
 
-  const vf = [`scale=${opts.width}:${opts.height}:force_original_aspect_ratio=cover,crop=${opts.width}:${opts.height}`, drawTexts]
+  const vf = [
+    `scale=${opts.width}:${opts.height}:force_original_aspect_ratio=increase`,
+    `crop=${opts.width}:${opts.height}`,
+    drawTexts
+  ]
     .filter(Boolean)
     .join(",");
 

@@ -14,9 +14,9 @@ test("creates a comic short and unlocks four-platform distribution", async ({ pa
   await expect(page.getByText("脚本已确认。这里的旁白已经同步使用你的最新改稿。")).toBeVisible();
 
   await page.getByRole("button", { name: /确认分镜/ }).click();
-  await expect(page.getByRole("button", { name: /^生成短片$/ })).toBeEnabled();
+  await expect(page.getByRole("button", { name: /快速预览（浏览器）/ })).toBeEnabled();
 
-  await page.getByRole("button", { name: /^生成短片$/ }).click();
+  await page.getByRole("button", { name: /快速预览（浏览器）/ }).click();
   await expect(page.getByRole("link", { name: /下载视频文件/ })).toBeVisible({ timeout: 80_000 });
 
   await expect(page.getByRole("button", { name: /一键准备四平台分发/ })).toBeEnabled();
