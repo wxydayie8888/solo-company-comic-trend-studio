@@ -1,4 +1,7 @@
+import { extendedTheories } from "./theoryLibrary";
 import { GrowthMetric, HotTopic, ResearchPacket, TheoryCard } from "./types";
+
+export const theoryCards: TheoryCard[] = extendedTheories;
 
 export const hotTopics: HotTopic[] = [
   {
@@ -180,93 +183,6 @@ export const researchPackets: Record<string, ResearchPacket> = {
     cannotSay: ["不能把城市选择做成唯一正确答案。"]
   }
 };
-
-export const theoryCards: TheoryCard[] = [
-  {
-    id: "boundary-work",
-    name: "边界工作",
-    oneSentence: "人会通过规则、语言和仪式，划出什么属于工作、什么属于生活。",
-    explanatoryPower: 94,
-    misuseRisk: "容易被误读成只要设边界就不用协作。",
-    angle: "解释为什么一条下班消息会让人感觉私人时间被入侵。",
-    everydayExample: "把手机调成勿扰，不是消失，而是告诉别人现在不在工作场域。",
-    bestForTopics: ["work-boundary", "relationship-label"],
-    misreadings: ["边界不是冷漠，也不是拒绝承担责任。", "边界不等于把沟通全部推给对方。"],
-    counterExamples: ["真正紧急的安全问题需要例外规则。", "团队事先约定了值班机制时，回应就不再是隐形加班。"],
-    sourceRefs: ["组织社会学中的边界工作", "工作家庭边界理论"],
-    goldenLines: ["好的边界不是把门关上，而是告诉别人什么时候可以敲门。", "让人崩溃的不是消息，是永远默认你在线。"]
-  },
-  {
-    id: "scarcity-mindset",
-    name: "稀缺心态",
-    oneSentence: "当人感觉钱、时间或机会不够时，大脑会更关注眼前压力，而不是长期选择。",
-    explanatoryPower: 88,
-    misuseRisk: "不能把结构性压力都说成个人心态问题。",
-    angle: "解释为什么省钱口号既轻松又带着一点防御。",
-    everydayExample: "看到满减时反复计算，其实是在对抗不确定感。",
-    bestForTopics: ["consumption-fatigue", "ai-anxiety"],
-    misreadings: ["稀缺心态不是说人不努力。", "省钱不一定是消费降级，也可能是价值排序升级。"],
-    counterExamples: ["高收入人群也可能因时间稀缺而焦虑。", "长期规划需要现实资源支持，不只是心态调整。"],
-    sourceRefs: ["行为经济学中的稀缺理论", "消费心理学"],
-    goldenLines: ["少买不是退出生活，而是把注意力赎回来。", "真正贵的不是商品，是你被它占走的判断力。"]
-  },
-  {
-    id: "social-exchange",
-    name: "社会交换理论",
-    oneSentence: "关系会在情感、时间、支持和回报之间寻找一种可持续的平衡。",
-    explanatoryPower: 86,
-    misuseRisk: "不能把亲密关系完全算账化。",
-    angle: "解释为什么情绪价值既是爱，也可能成为负担。",
-    everydayExample: "朋友愿意听你倾诉，但也需要被看见和休息。",
-    bestForTopics: ["relationship-label", "work-boundary"],
-    misreadings: ["关系不是交易表。", "谈回报不是功利，而是让关系不被耗尽。"],
-    counterExamples: ["照护、亲情和危机支持不能简单等价交换。", "短期失衡不等于关系失败。"],
-    sourceRefs: ["社会交换理论", "情绪劳动研究"],
-    goldenLines: ["亲密不是全天候客服，爱也需要可持续。", "最好的情绪价值，是双方都不用透支自己。"]
-  },
-  {
-    id: "social-comparison",
-    name: "社会比较",
-    oneSentence: "人会通过和别人比较来判断自己的位置，工具越多，比较对象也越多。",
-    explanatoryPower: 82,
-    misuseRisk: "不能把技术变化造成的真实压力简化成嫉妒。",
-    angle: "解释 AI 工具越多，为什么人反而更怕落后。",
-    everydayExample: "收藏 100 个工具后，真正让人焦虑的是别人好像已经用它赚钱了。",
-    bestForTopics: ["ai-anxiety", "city-belonging"],
-    misreadings: ["比较不是虚荣，是人判断位置的默认方式。", "焦虑不总是个人脆弱，也可能是竞争规则改变。"],
-    counterExamples: ["清楚的学习目标能降低比较带来的噪音。", "某些岗位的 AI 压力是真实技能迁移问题。"],
-    sourceRefs: ["社会比较理论", "技术采用与身份焦虑"],
-    goldenLines: ["你焦虑的不是工具太多，而是排行榜突然变长了。", "工具会更新，判断力才是你的操作系统。"]
-  },
-  {
-    id: "reference-group",
-    name: "参照群体",
-    oneSentence: "一个人怎么评价自己的生活，常常取决于他拿谁当参照。",
-    explanatoryPower: 84,
-    misuseRisk: "不能忽视收入、家庭和城市资源的现实差异。",
-    angle: "解释为什么换城市像是在换一套人生评分表。",
-    everydayExample: "在一线城市觉得自己慢，换到另一座城市后发现生活节奏可以重新定义。",
-    bestForTopics: ["city-belonging", "consumption-fatigue"],
-    misreadings: ["换参照不是逃避现实。", "参照群体会影响感受，但不能替代收入和机会。"],
-    counterExamples: ["职业高集中行业仍然需要城市资源。", "家庭照护和医疗教育会改变城市选择。"],
-    sourceRefs: ["参照群体理论", "城市社会学与生活方式研究"],
-    goldenLines: ["换一座城市，有时候是在换一张人生计分表。", "不是你跑得慢，是你可能站错了赛道。"]
-  },
-  {
-    id: "framing-effect",
-    name: "框架效应",
-    oneSentence: "同一件事被放进不同表达框架里，会触发完全不同的判断。",
-    explanatoryPower: 78,
-    misuseRisk: "不能把事实争议只归因于话术包装。",
-    angle: "解释为什么「拒绝加班」和「保护协作规则」听起来像两件事。",
-    everydayExample: "同样是不回消息，说成失联和说成非工作时间，感受完全不同。",
-    bestForTopics: ["work-boundary", "consumption-fatigue", "city-belonging"],
-    misreadings: ["框架不是洗白事实。", "换表达不能代替解决真实问题。"],
-    counterExamples: ["当事实足够明确时，框架影响会下降。", "涉及权利侵害时不能只讨论表达方式。"],
-    sourceRefs: ["认知心理学中的框架效应", "传播学议题框架"],
-    goldenLines: ["很多争论不是答案不同，而是题目被写成了两套。", "换一个框架，不是换立场，是先看见问题长什么样。"]
-  }
-];
 
 export const growthMetrics: GrowthMetric[] = [
   {

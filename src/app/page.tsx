@@ -4,6 +4,7 @@ import { LayoutDashboard, TimerReset } from "lucide-react";
 import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DirectorStoryboard } from "@/components/DirectorStoryboard";
 import { GrowthReviewPanel } from "@/components/GrowthReviewPanel";
+import { LiveControls, type TheoryMatch } from "@/components/LiveControls";
 import { PublishPackPanel } from "@/components/PublishPackPanel";
 import { ResearchPacketPanel } from "@/components/ResearchPacketPanel";
 import { ScriptWorkspace } from "@/components/ScriptWorkspace";
@@ -12,18 +13,21 @@ import { TopicDecisionPanel } from "@/components/TopicDecisionPanel";
 import { VideoStudio } from "@/components/VideoStudio";
 import { WorkflowStepper } from "@/components/WorkflowStepper";
 import { buildDirectorFrames, createEpisode, createPlatformDrafts, matchTheories, summarizeGrowth } from "@/lib/pipeline";
-import { growthMetrics, hotTopics, researchPackets, theoryCards } from "@/lib/seed";
-import { HotTopic, ScriptSegment, ScriptSegmentId, WorkflowStatus } from "@/lib/types";
+import { growthMetrics, hotTopics as seedTopics, researchPackets, theoryCards } from "@/lib/seed";
+import { ContentThesis, HotTopic, ScriptSegment, ScriptSegmentId, TheoryCard, WorkflowStatus } from "@/lib/types";
 
 type ActiveStep = "topic" | "theory" | "script" | "storyboard" | "video" | "publish";
 
 export default function Home() {
-  const [selectedTopicId, setSelectedTopicId] = useState(hotTopics[0].id);
+  const [hotTopics, setHotTopics] = useState<HotTopic[]>(seedTopics);
+  const [selectedTopicId, setSelectedTopicId] = useState(seedTopics[0].id);
   const [confirmedTheoryId, setConfirmedTheoryId] = useState<string | null>(null);
   const [isScriptConfirmed, setIsScriptConfirmed] = useState(false);
   const [isStoryboardConfirmed, setIsStoryboardConfirmed] = useState(false);
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
   const [activeStep, setActiveStep] = useState<ActiveStep>("theory");
+  const [aiTheoryMatches, setAiTheoryMatches] = useState<TheoryMatch[] | null>(null);
+  const [aiThesisOverride, setAiThesisOverride] = useState<ContentThesis | null>(null);
   const topicRef = useRef<HTMLDivElement>(null);
   const theoryRef = useRef<HTMLDivElement>(null);
   const scriptRef = useRef<HTMLDivElement>(null);
@@ -31,12 +35,52 @@ export default function Home() {
   const videoRef = useRef<HTMLDivElement>(null);
   const publishRef = useRef<HTMLDivElement>(null);
   const selectedTopic = hotTopics.find((topic) => topic.id === selectedTopicId) ?? hotTopics[0];
-  const packet = researchPackets[selectedTopic.id];
-  const matchedTheories = useMemo(() => matchTheories(selectedTopic, theoryCards), [selectedTopic]);
+  const [livePackets, setLivePackets] = useState<Record<string, import("@/lib/types").ResearchPacket>>({});
+  const packet = useMemo(
+    () =>
+      livePackets[selectedTopic.id] ??
+      researchPackets[selectedTopic.id] ?? {
+        topicId: selectedTopic.id,
+        factSummary: selectedTopic.summary,
+        timeline: [],
+        debates: ["（待 AI 拉取研究包）公众分歧点是什么？"],
+        perspectives: ["（待补充）当下有哪些不同解释？"],
+        sourceNotes: [selectedTopic.sourceLabel],
+        uncertainties: ["（待补充）哪些事实尚未确证？"],
+        cannotSay: ["不点名具体公司或个人。"]
+      },
+    [livePackets, selectedTopic.id, selectedTopic.sourceLabel, selectedTopic.summary]
+  );
+  useEffect(() => {
+    if (livePackets[selectedTopic.id] || researchPackets[selectedTopic.id]) return;
+    let cancelled = false;
+    fetch(`/api/research/${encodeURIComponent(selectedTopic.id)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.packet) return;
+        setLivePackets((prev) => ({ ...prev, [selectedTopic.id]: data.packet }));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [livePackets, selectedTopic.id]);
+  const matchedTheories = useMemo<TheoryCard[]>(() => {
+    if (aiTheoryMatches && aiTheoryMatches.length > 0) {
+      const lookup = new Map(theoryCards.map((t) => [t.id, t]));
+      const ordered = aiTheoryMatches.map((m) => lookup.get(m.theoryId)).filter((t): t is TheoryCard => Boolean(t));
+      if (ordered.length > 0) return ordered;
+    }
+    return matchTheories(selectedTopic, theoryCards);
+  }, [aiTheoryMatches, selectedTopic]);
   const [selectedTheoryId, setSelectedTheoryId] = useState(matchedTheories[0].id);
   const selectedTheory = matchedTheories.find((theory) => theory.id === selectedTheoryId) ?? matchedTheories[0];
   const isTheoryConfirmed = confirmedTheoryId === selectedTheory.id;
-  const episode = useMemo(() => createEpisode(selectedTopic, packet, selectedTheory), [packet, selectedTheory, selectedTopic]);
+  const baseEpisode = useMemo(() => createEpisode(selectedTopic, packet, selectedTheory), [packet, selectedTheory, selectedTopic]);
+  const episode = useMemo(
+    () => (aiThesisOverride ? { ...baseEpisode, thesis: aiThesisOverride } : baseEpisode),
+    [aiThesisOverride, baseEpisode]
+  );
   const [scriptSegments, setScriptSegments] = useState<ScriptSegment[]>(episode.scriptSegments);
   const editedEpisode = useMemo(
     () => ({
@@ -89,8 +133,46 @@ export default function Home() {
     setConfirmedTheoryId(null);
     setIsScriptConfirmed(false);
     setIsStoryboardConfirmed(false);
+    setAiTheoryMatches(null);
+    setAiThesisOverride(null);
     resetGeneratedVideo();
     setActiveStep("theory");
+  }
+
+  function handleTopicsRefreshed(topics: HotTopic[]) {
+    if (topics.length === 0) return;
+    setHotTopics(topics);
+    setSelectedTopicId(topics[0].id);
+    setAiTheoryMatches(null);
+    setAiThesisOverride(null);
+    setConfirmedTheoryId(null);
+    setIsScriptConfirmed(false);
+    setIsStoryboardConfirmed(false);
+    resetGeneratedVideo();
+    setActiveStep("theory");
+  }
+
+  function handleScriptRewritten(thesis: ContentThesis, segments: ScriptSegment[]) {
+    setAiThesisOverride(thesis);
+    setScriptSegments(segments);
+    setIsScriptConfirmed(false);
+    setIsStoryboardConfirmed(false);
+    resetGeneratedVideo();
+    setActiveStep("script");
+    window.setTimeout(() => {
+      scriptRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
+  }
+
+  function handleTheoryMatchesUpdated(matches: TheoryMatch[]) {
+    if (matches.length === 0) return;
+    setAiTheoryMatches(matches);
+    setSelectedTheoryId(matches[0].theoryId);
+    setConfirmedTheoryId(null);
+    setActiveStep("theory");
+    window.setTimeout(() => {
+      theoryRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 80);
   }
 
   function chooseTheory(theoryId: string) {
@@ -192,6 +274,16 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <div className="shell">
+        <LiveControls
+          onScriptRewritten={handleScriptRewritten}
+          onTheoryMatchesUpdated={handleTheoryMatchesUpdated}
+          onTopicsRefreshed={handleTopicsRefreshed}
+          selectedTheoryId={selectedTheory.id}
+          selectedTopicId={selectedTopic.id}
+        />
+      </div>
 
       <WorkflowStepper activeStep={activeStep} onStepSelect={scrollToStep} workflow={workflow} />
 

@@ -13,3 +13,6 @@ tsconfig.tsbuildinfo
 tsconfig.typecheck.tsbuildinfo
 test-results
 playwright-report
+data/*.json
+data/*.json.tmp
+!data/.gitkeep

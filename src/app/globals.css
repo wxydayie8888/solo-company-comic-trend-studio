@@ -1460,3 +1460,82 @@ h1 {
     width: 100%;
   }
 }
+
+.live-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  margin: 16px 0 0;
+}
+.live-controls-status {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.live-controls-status em {
+  color: var(--muted);
+  font-style: normal;
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+.live-controls-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.live-controls-buttons button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--soft-green);
+  color: var(--ink);
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.live-controls-buttons button:hover:not(:disabled) {
+  background: var(--soft-blue);
+}
+.live-controls-buttons button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.live-controls-flash {
+  font-size: 12px;
+  color: var(--green);
+  background: var(--soft-green);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dot-green {
+  background: var(--green);
+}
+.dot-amber {
+  background: var(--amber);
+}
+.spin {
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
