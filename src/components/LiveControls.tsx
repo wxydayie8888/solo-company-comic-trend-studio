@@ -11,6 +11,15 @@ export interface TheoryMatch {
   caution: string;
 }
 
+interface PerPlatformResult {
+  platform: string;
+  source: string;
+  count: number;
+  ok: boolean;
+  proxy: boolean;
+  error?: string;
+}
+
 interface Props {
   selectedTopicId: string;
   selectedTheoryId: string;
@@ -46,6 +55,7 @@ export function LiveControls({
   const [busy, setBusy] = useState<null | "topics" | "script" | "theory">(null);
   const [health, setHealth] = useState<HealthInfo>({ aiEnabled: false });
   const [message, setMessage] = useState<string | null>(null);
+  const [perPlatform, setPerPlatform] = useState<PerPlatformResult[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,8 +76,17 @@ export function LiveControls({
     setBusy("topics");
     try {
       const res = await fetch("/api/topics/refresh", { method: "POST" });
-      const data = (await res.json()) as { topics?: HotTopic[]; fetchedAt?: string; error?: string };
-      if (!res.ok || !data.topics) throw new Error(data.error ?? `HTTP ${res.status}`);
+      const data = (await res.json()) as {
+        topics?: HotTopic[];
+        fetchedAt?: string;
+        error?: string;
+        perPlatform?: PerPlatformResult[];
+      };
+      if (data.perPlatform) setPerPlatform(data.perPlatform);
+      if (!res.ok || !data.topics) {
+        flash(data.error ?? `HTTP ${res.status}`);
+        return;
+      }
       onTopicsRefreshed(data.topics);
       flash(`已抓 ${data.topics.length} 条热点（${data.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString("zh-CN") : "现在"}）`);
       setHealth((h) => ({ ...h, topicsFetchedAt: data.fetchedAt }));
@@ -142,6 +161,22 @@ export function LiveControls({
         </button>
       </div>
       {message ? <div className="live-controls-flash">{message}</div> : null}
+      {perPlatform && perPlatform.length > 0 ? (
+        <div className="per-platform">
+          {perPlatform.map((p) => (
+            <div className={`per-platform-row ${p.ok ? "ok" : "fail"}`} key={p.platform}>
+              <span className="badge">{p.ok ? "✓" : "✕"}</span>
+              <strong>{p.platform}</strong>
+              <span className="count">{p.count} 条</span>
+              <span className="src">
+                {p.source}
+                {p.proxy ? " · 代理" : ""}
+              </span>
+              {p.error ? <span className="err">{p.error}</span> : null}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

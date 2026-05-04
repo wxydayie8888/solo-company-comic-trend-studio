@@ -16,4 +16,5 @@ playwright-report
 data/*.json
 data/*.json.tmp
 !data/.gitkeep
+data/xhs-data/
 public/generated/

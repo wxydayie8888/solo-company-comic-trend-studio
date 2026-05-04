@@ -95,11 +95,29 @@ Next.js 14 (server mode)
 
 ## Phase 3 路线图
 
+- [x] **真实热点抓取**：Provider 抽象 + xhs-toolkit / trend-radar / daily-hot 多源 → 见 [`docs/hot-topics.md`](docs/hot-topics.md)
+- [x] **cron 调度（macOS launchd）**：每日凌晨自动 `/api/topics/refresh` → 见 [`docs/cron-mac.md`](docs/cron-mac.md)
 - [ ] 角色一致性升级：先生成"主角立绘" → 后续每帧用即梦 i2v 模式带参考图
 - [ ] 把静帧合成换成即梦视频片段：每段直接 i2v 生成 5s 动态视频
-- [ ] cron 调度：每日凌晨自动跑 `/api/topics/refresh` + 起草 episode 草稿
 - [ ] 增长权重学习：根据回拉数据反哺 `topicScoring.ts` 的权重
 - [ ] 风险闸门：再用一个 Claude subagent 审稿（敏感词、理论引用准确性、平台政策）
+
+## 真实热点抓取（Phase 3）
+
+默认情况下，小红书/视频号/快手 用 DailyHotApi 的代理（微博/知乎/B站热搜）。要切换到真实数据：
+
+```bash
+# 1. 装 Docker Desktop（一次性）
+# 2. 启动本地服务（拉镜像约 5 分钟）
+docker compose up -d
+# 3. 浏览器 http://localhost:8005 扫码登录小红书（cookie 持久化）
+# 4. 在 .env.local 加 XIAOHONGSHU_SOURCE=xhs-toolkit 等配置
+# 5. 重启 npm run dev
+```
+
+详细指南：[`docs/hot-topics.md`](docs/hot-topics.md)。
+
+要让 Mac 每天凌晨自动刷：[`docs/cron-mac.md`](docs/cron-mac.md)。
 
 ## 部署
 

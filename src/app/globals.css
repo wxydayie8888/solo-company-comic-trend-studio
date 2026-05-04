@@ -1556,3 +1556,58 @@ h1 {
   aspect-ratio: 9/16;
   object-fit: cover;
 }
+
+.per-platform {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f7f5ef;
+  border: 1px solid var(--line);
+}
+.per-platform-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono, monospace);
+}
+.per-platform-row .badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 11px;
+}
+.per-platform-row.ok .badge {
+  background: var(--soft-green);
+  color: var(--green);
+}
+.per-platform-row.fail .badge {
+  background: var(--soft-coral);
+  color: var(--coral);
+}
+.per-platform-row strong {
+  min-width: 56px;
+}
+.per-platform-row .count {
+  color: var(--muted);
+  min-width: 50px;
+}
+.per-platform-row .src {
+  color: var(--muted);
+  font-size: 11px;
+}
+.per-platform-row .err {
+  color: var(--coral);
+  font-size: 11px;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}

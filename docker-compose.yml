@@ -1,0 +1,49 @@
+# 一键启动热点抓取 + 发布桥接所需的本地服务。
+#
+# 用法：
+#   1. 装 Docker Desktop（Mac 版：https://www.docker.com/products/docker-desktop/）
+#   2. 在项目根目录运行：docker compose up -d
+#   3. 第一次启动 xhs-toolkit 后，浏览器打开 http://localhost:8005，扫码登录小红书
+#   4. 在 .env.local 里把 XHS_TOOLKIT_URL=http://localhost:8005、XIAOHONGSHU_SOURCE=xhs-toolkit
+#   5. 重启 npm run dev 让新配置生效
+#
+# 详细文档：docs/hot-topics.md
+
+services:
+  # 小红书数据 + 发布。需要扫码登录小红书账号，cookie 持久化在 ./data/xhs-data。
+  # 镜像维护方：https://github.com/aki66938/xhs-toolkit
+  # 注意：作者的发布 image tag 时常变动，第一次拉时若失败请用：
+  #   git clone https://github.com/aki66938/xhs-toolkit.git && cd xhs-toolkit && docker build -t xhs-toolkit .
+  # 然后把下面的 image: 改成 xhs-toolkit:latest
+  xhs-toolkit:
+    image: aki66938/xhs-toolkit:latest
+    container_name: solo-xhs-toolkit
+    ports:
+      - "8005:8000"
+    volumes:
+      - ./data/xhs-data:/app/data
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+
+  # 11 平台聚合 + AI 筛选。覆盖度好但小红书/视频号未必稳定，按需启用。
+  # 镜像维护方：https://github.com/sansan0/TrendRadar
+  trend-radar:
+    image: sansan0/trend-radar:latest
+    container_name: solo-trend-radar
+    ports:
+      - "8006:8000"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
+
+  # 自部署 DailyHotApi。公共实例 api-hot.imsyy.top 偶尔挂时启用，把 HOT_API_BASE 改为 http://localhost:8007
+  # 镜像维护方：https://github.com/imsyy/DailyHotApi
+  daily-hot-api:
+    image: imsyy/daily-hot-api:latest
+    container_name: solo-daily-hot
+    ports:
+      - "8007:6688"
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Shanghai
