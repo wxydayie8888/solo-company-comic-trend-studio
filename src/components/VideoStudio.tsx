@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, Film, Loader2 } from "lucide-react";
+import { Download, Film, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { Episode } from "@/lib/types";
 
@@ -18,10 +18,20 @@ const targetVideoDurationMs = 60_000;
 const introDurationMs = 4_000;
 const outroDurationMs = 4_000;
 
+interface RenderResponse {
+  videoUrl: string;
+  frameUrls: string[];
+  narrationUrls: string[];
+  durationMs: number;
+  providers: { image: string; tts: string };
+}
+
 export function VideoStudio({ episode, generatedVideoUrl, isActive, isUnlocked, onGenerated }: VideoStudioProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRendering, setIsRendering] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [lastRender, setLastRender] = useState<RenderResponse | null>(null);
 
   async function generateVideo() {
     if (!isUnlocked || isGenerating) return;
@@ -39,6 +49,30 @@ export function VideoStudio({ episode, generatedVideoUrl, isActive, isUnlocked, 
     }
   }
 
+  async function renderWithJimeng() {
+    if (!isUnlocked || isRendering) return;
+    setError(null);
+    setIsRendering(true);
+    try {
+      const res = await fetch("/api/episode/render", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ episode })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      const data = (await res.json()) as RenderResponse;
+      setLastRender(data);
+      onGenerated(data.videoUrl);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "服务端渲染失败");
+    } finally {
+      setIsRendering(false);
+    }
+  }
+
   return (
     <section className={`work-panel video-studio ${isActive ? "active-step" : ""} ${!isUnlocked ? "locked-step" : ""}`}>
       <div className="section-heading">
@@ -49,31 +83,56 @@ export function VideoStudio({ episode, generatedVideoUrl, isActive, isUnlocked, 
         <Film size={20} />
       </div>
       <div className={`step-callout ${isUnlocked ? "ready" : "locked"}`}>
-        {isUnlocked ? "点击生成后，浏览器会录制一条约 60 秒的竖屏 WebM 漫画短片。" : "先确认分镜，再生成短片。"}
+        {isUnlocked
+          ? "两条路：浏览器端「快速预览」生成 60 秒 WebM 字幕条；服务端「漫画合成」走即梦文生图 + TTS + ffmpeg，输出 MP4。"
+          : "先确认分镜，再生成短片。"}
       </div>
       <div className="video-grid">
         <div className="phone-preview">
           <div>
-            <span>{generatedVideoUrl ? "已生成" : isGenerating ? `${progress}%` : "待生成"}</span>
+            <span>{generatedVideoUrl ? "已生成" : isGenerating || isRendering ? `${progress}%` : "待生成"}</span>
             <strong>{episode.topic.youthAngle}</strong>
             <p>{episode.thesis.goldenLine}</p>
           </div>
         </div>
         <div className="video-actions">
-          <p>当前生成的是浏览器端 60 秒短片：包含封面感画面、分镜标题、旁白字幕和进度动效，适合先审片和上传测试。</p>
-          <button className="primary-action" disabled={!isUnlocked || isGenerating} onClick={generateVideo} type="button">
+          <p>「快速预览」走浏览器 Canvas，几十秒出片可审稿；「漫画合成」调即梦+ffmpeg，1-3 分钟出片可发布。</p>
+          <button className="primary-action" disabled={!isUnlocked || isGenerating || isRendering} onClick={generateVideo} type="button">
             {isGenerating ? <Loader2 className="spin" size={17} /> : <Film size={17} />}
-            {isGenerating ? "正在生成短片" : generatedVideoUrl ? "重新生成短片" : "生成短片"}
+            {isGenerating ? "正在生成预览" : "快速预览（浏览器）"}
+          </button>
+          <button
+            className="primary-action"
+            disabled={!isUnlocked || isGenerating || isRendering}
+            onClick={renderWithJimeng}
+            style={{ background: "var(--violet)" }}
+            type="button"
+          >
+            {isRendering ? <Loader2 className="spin" size={17} /> : <Sparkles size={17} />}
+            {isRendering ? "正在合成漫画 MP4" : "用即梦合成漫画 MP4（服务端）"}
           </button>
           {generatedVideoUrl ? (
-            <a className="secondary-action" download={`${episode.id}.webm`} href={generatedVideoUrl}>
+            <a className="secondary-action" download={`${episode.id}.mp4`} href={generatedVideoUrl}>
               <Download size={17} />
               下载视频文件
             </a>
           ) : null}
+          {lastRender ? (
+            <p className="success-text">
+              已生成 · 图像: {lastRender.providers.image} · 配音: {lastRender.providers.tts} · 时长 {Math.round(lastRender.durationMs / 1000)}s
+            </p>
+          ) : null}
           {error ? <p className="error-text">{error}</p> : null}
         </div>
       </div>
+      {lastRender && lastRender.frameUrls.length > 0 ? (
+        <div className="frame-strip">
+          {lastRender.frameUrls.slice(0, 4).map((url, idx) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img key={url} alt={`frame-${idx + 1}`} src={url} />
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
